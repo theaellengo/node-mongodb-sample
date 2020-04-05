@@ -68,7 +68,26 @@ app.get('/', function(req, res) {
 // Students route
 app.get('/students', function(req, res) {
   // TODO: Retrieve data from database and send data with template
-  res.render('students', { title: 'Students' });
+  //res.render('students', { title: 'Students' });
+
+  mongoClient.connect(databaseURL, options, function(err, client) {
+    if(err) throw err;
+    // Connect to the same database
+    const dbo = client.db(dbname);
+
+    dbo.collection("students").find({}).toArray(function(err, result) {
+      if(err) throw err;
+
+      console.log("Read Successful!");
+      client.close();
+
+      res.render('students', {
+        title: 'Students',
+        students: result,
+      });
+
+    });
+  });
 })
 
 
@@ -83,8 +102,25 @@ app.post('/addStudent', function(req, res) {
     img: `img/${req.body.gender}.png`
   };
 
-  // TODO: Insert data to the database
-  //       & send a custom message to send the "AJAX-way"
+  // Insert data to the database
+  // & send a custom message to send the "AJAX-way"
+  mongoClient.connect(databaseURL, options, function(err, client) {
+    if(err) throw err;
+    // Connect to the same database
+    const dbo = client.db(dbname);
+
+    dbo.collection("students").insertOne(student, function(err, res) {
+      if (err) throw err;
+  
+      console.log(res);
+      console.log("Insert Successful!");
+  
+      client.close();
+    });
+  });
+
+  const result = { success: true, message: "Student created!" };
+  res.send(result);
 
 });
 
@@ -95,8 +131,22 @@ app.post('/searchStudents', function(req, res) {
     // name: { $regex: `^${req.body.name}` }
   };
 
-  // TODO: Search for the student from the database
-  //       & return the array of objects for the template
+  mongoClient.connect(databaseURL, options, function(err, client) {
+    if(err) throw err;
+    // Connect to the same database
+    const dbo = client.db(dbname);
+
+    dbo.collection("students").find(query).toArray(function(err, result) {
+      if(err) throw err;
+  
+      console.log(result);
+      console.log("Read Successful!");
+      client.close();
+  
+      res.send(result);
+  
+    });
+  });
 });
 
 app.post('/updateStudent', function(req, res) {
